@@ -74,10 +74,12 @@ def main():
         h, w, colors = crop.shape
         if min(h,w) >= 64:
             path = imagepath.replace("cat_dataset","cats_64x64")
-            cv2.imwrite(path, crop)
+            out =cv2.resize(crop,(64,64),interpolation=cv2.INTER_AREA)
+            cv2.imwrite(path, out)
         if min(h,w) >= 128:
             path = imagepath.replace("cat_dataset","cats_128x128")
-            cv2.imwrite(path, crop)
+            out =cv2.resize(crop,(128,128))
+            cv2.imwrite(path, out)
         print (imagepath,coords)
         
 def calculate():
@@ -87,6 +89,9 @@ def calculate():
     for imagepath in glob.glob('cat_dataset/*.jpg'):
         img_all +=1
     for imagepath in glob.glob('cats_64x64/*.jpg'):
+        image =cv2.imread(imagepath)
+        print(image.shape)
+        
         img_64 +=1
     for imagepath in glob.glob('cats_128x128/*.jpg'):
         img_128 +=1
