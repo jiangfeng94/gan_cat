@@ -3,3 +3,5 @@ cat_dataset
 output
 cats_64x64
 cats_128x128
+__pycache__
+.idea
