@@ -12,13 +12,15 @@ import numpy as np
 import scipy.misc
 import tensorflow as tf
 from skimage.io import imsave
-
+import cv2
+from PIL import Image
 
 batch_size =config.batch_size
 img_size =config.img_size
 z_size =config.z_size
 h1_size =config.h1_size
 h2_size =config.h2_size
+h3_size =config.h3_size
 
 
 def show_result(batch_res, fname, grid_size=(4, 4), grid_pad=5):
@@ -44,34 +46,46 @@ def build_generator(Z):
     w2 =tf.Variable(tf.truncated_normal([h1_size,h2_size],stddev=0.1),name="g_w2",dtype=tf.float32)
     b2 =tf.Variable(tf.zeros([h2_size]), name="g_b2", dtype=tf.float32)
     h2 =tf.nn.relu(tf.matmul(h1, w2) + b2)
-    w3 =tf.Variable(tf.truncated_normal([h2_size,img_size],stddev=0.1),name="g_w3",dtype =tf.float32)
-    b3 =tf.Variable(tf.zeros([img_size]),name="g_b3",dtype=tf.float32)
-    h3 =tf.matmul(h2,w3)+b3
-    x_generate = tf.nn.tanh(h3)
-    g_params =[w1,b1,w2,b2,w3,b3]
+
+    w3 = tf.Variable(tf.truncated_normal([h2_size, h3_size], stddev=0.1), name="g_w3", dtype=tf.float32)
+    b3 = tf.Variable(tf.zeros([h3_size]), name="g_b3", dtype=tf.float32)
+    h3 = tf.nn.relu(tf.matmul(h2, w3) + b3)
+
+    w4 =tf.Variable(tf.truncated_normal([h3_size,img_size],stddev=0.1),name="g_w4",dtype =tf.float32)
+    b4 =tf.Variable(tf.zeros([img_size]),name="g_b4",dtype=tf.float32)
+    h4 =tf.matmul(h3,w4)+b4
+    x_generate = tf.nn.tanh(h4)
+    g_params =[w1,b1,w2,b2,w3,b3,w4,b4]
     return x_generate,g_params
     
 def build_discriminator(x_data,x_generator,keep_prob):
     x_in =tf.concat([x_data,x_generator],0)
-    w1 = tf.Variable(tf.truncated_normal([img_size, h2_size], stddev=0.1), name="d_w1", dtype=tf.float32)
-    b1 = tf.Variable(tf.zeros([h2_size]), name="d_b1", dtype=tf.float32)
+    w1 = tf.Variable(tf.truncated_normal([img_size, h3_size], stddev=0.1), name="d_w1", dtype=tf.float32)
+    b1 = tf.Variable(tf.zeros([h3_size]), name="d_b1", dtype=tf.float32)
     h1 = tf.nn.dropout(tf.nn.relu(tf.matmul(x_in, w1) + b1), keep_prob)
-    w2 = tf.Variable(tf.truncated_normal([h2_size, h1_size], stddev=0.1), name="d_w2", dtype=tf.float32)
-    b2 = tf.Variable(tf.zeros([h1_size]), name="d_b2", dtype=tf.float32)
+
+    w2 = tf.Variable(tf.truncated_normal([h3_size, h2_size], stddev=0.1), name="d_w2", dtype=tf.float32)
+    b2 = tf.Variable(tf.zeros([h2_size]), name="d_b2", dtype=tf.float32)
     h2 = tf.nn.dropout(tf.nn.relu(tf.matmul(h1, w2) + b2), keep_prob)
-    w3 = tf.Variable(tf.truncated_normal([h1_size, 1], stddev=0.1), name="d_w3", dtype=tf.float32)
-    b3 = tf.Variable(tf.zeros([1]), name="d_b3", dtype=tf.float32)
-    h3 = tf.matmul(h2, w3) + b3
-    y_data =tf.nn.sigmoid(tf.slice(h3,[0,0],[batch_size,-1],name =None))
-    y_generated = tf.nn.sigmoid(tf.slice(h3, [batch_size, 0], [-1, -1], name=None))
-    d_params = [w1, b1, w2, b2, w3, b3]
+
+    w3 = tf.Variable(tf.truncated_normal([h2_size, h1_size], stddev=0.1), name="d_w3", dtype=tf.float32)
+    b3 = tf.Variable(tf.zeros([h1_size]), name="d_b3", dtype=tf.float32)
+    h3 = tf.nn.dropout(tf.nn.relu(tf.matmul(h2, w3) + b3), keep_prob)
+
+    w4 = tf.Variable(tf.truncated_normal([h1_size, 1], stddev=0.1), name="d_w4", dtype=tf.float32)
+    b4 = tf.Variable(tf.zeros([1]), name="d_b4", dtype=tf.float32)
+    h4 = tf.matmul(h3, w4) + b4
+    y_data =tf.nn.sigmoid(tf.slice(h4,[0,0],[batch_size,-1],name =None))
+    y_generated = tf.nn.sigmoid(tf.slice(h4, [batch_size, 0], [-1, -1], name=None))
+    d_params = [w1, b1, w2, b2, w3, b3,w4,b4]
     return y_data, y_generated, d_params
 
 
 def get_image(image_path):
-    image = scipy.misc.imread(image_path).astype(np.float)
-    image = image.reshape([64 * 64 * 3])
-    return np.array(image) / 256
+    image = Image.open(image_path) #.convert('L')  # 转化为灰度图
+    arr_img =np.array(image)
+    arr_img = arr_img.reshape([64 * 64 *3])
+    return np.array(arr_img) / 256
     
 def train():
 
