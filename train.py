@@ -38,46 +38,63 @@ def show_result(batch_res, fname, grid_size=(4, 4), grid_pad=5):
         col = (i % grid_size[1]) * (img_w + grid_pad)
         img_grid[row:row + img_h, col:col + img_w,:] = img
     imsave(fname, img_grid)
-    
-def build_generator(Z):
-    w1 =tf.Variable(tf.truncated_normal([z_size,h1_size],stddev=0.1),name="g_w1",dtype=tf.float32)
-    b1 =tf.Variable(tf.zeros([h1_size]),name="g_b1",dtype=tf.float32)
-    h1 =tf.nn.relu(tf.matmul(Z,w1) +b1)
-    w2 =tf.Variable(tf.truncated_normal([h1_size,h2_size],stddev=0.1),name="g_w2",dtype=tf.float32)
-    b2 =tf.Variable(tf.zeros([h2_size]), name="g_b2", dtype=tf.float32)
-    h2 =tf.nn.relu(tf.matmul(h1, w2) + b2)
 
-    w3 = tf.Variable(tf.truncated_normal([h2_size, h3_size], stddev=0.1), name="g_w3", dtype=tf.float32)
-    b3 = tf.Variable(tf.zeros([h3_size]), name="g_b3", dtype=tf.float32)
+
+def build_generator(Z):
+    w1 = tf.get_variable(name="g_w1", shape=[z_size, h1_size], initializer=tf.contrib.layers.xavier_initializer(),
+                         dtype=tf.float32)
+    b1 = tf.get_variable(name="g_b1", shape=[h1_size], initializer=tf.contrib.layers.xavier_initializer(),
+                         dtype=tf.float32)
+    h1 = tf.nn.relu(tf.matmul(Z, w1) + b1)
+    w2 = tf.get_variable(name="g_w2", shape=[h1_size, h2_size], initializer=tf.contrib.layers.xavier_initializer(),
+                         dtype=tf.float32)
+    b2 = tf.get_variable(name="g_b2", shape=[h2_size], initializer=tf.contrib.layers.xavier_initializer(),
+                         dtype=tf.float32)
+    h2 = tf.nn.relu(tf.matmul(h1, w2) + b2)
+
+    w3 = tf.get_variable(name="g_w3", shape=[h2_size, h3_size], initializer=tf.contrib.layers.xavier_initializer(),
+                         dtype=tf.float32)
+    b3 = tf.get_variable(name="g_b3", shape=[h3_size], initializer=tf.contrib.layers.xavier_initializer(),
+                         dtype=tf.float32)
     h3 = tf.nn.relu(tf.matmul(h2, w3) + b3)
 
-    w4 =tf.Variable(tf.truncated_normal([h3_size,img_size],stddev=0.1),name="g_w4",dtype =tf.float32)
-    b4 =tf.Variable(tf.zeros([img_size]),name="g_b4",dtype=tf.float32)
-    h4 =tf.matmul(h3,w4)+b4
+    w4 = tf.get_variable(name="g_w4", shape=[h3_size, img_size], initializer=tf.contrib.layers.xavier_initializer(),
+                         dtype=tf.float32)
+    b4 = tf.get_variable(name="g_b4", shape=[img_size], initializer=tf.contrib.layers.xavier_initializer(),
+                         dtype=tf.float32)
+    h4 = tf.matmul(h3, w4) + b4
     x_generate = tf.nn.tanh(h4)
-    g_params =[w1,b1,w2,b2,w3,b3,w4,b4]
-    return x_generate,g_params
-    
-def build_discriminator(x_data,x_generator,keep_prob):
-    x_in =tf.concat([x_data,x_generator],0)
-    w1 = tf.Variable(tf.truncated_normal([img_size, h3_size], stddev=0.1), name="d_w1", dtype=tf.float32)
-    b1 = tf.Variable(tf.zeros([h3_size]), name="d_b1", dtype=tf.float32)
+    g_params = [w1, b1, w2, b2, w3, b3, w4, b4]
+    return x_generate, g_params
+
+
+def build_discriminator(x_data, x_generator, keep_prob):
+    x_in = tf.concat([x_data, x_generator], 0)
+    w1 = tf.get_variable(name="d_w1", shape=[img_size, h3_size], initializer=tf.contrib.layers.xavier_initializer(),
+                         dtype=tf.float32)
+    b1 = tf.get_variable(name="d_b1", shape=[h3_size], initializer=tf.contrib.layers.xavier_initializer(),
+                         dtype=tf.float32)
     h1 = tf.nn.dropout(tf.nn.relu(tf.matmul(x_in, w1) + b1), keep_prob)
 
-    w2 = tf.Variable(tf.truncated_normal([h3_size, h2_size], stddev=0.1), name="d_w2", dtype=tf.float32)
-    b2 = tf.Variable(tf.zeros([h2_size]), name="d_b2", dtype=tf.float32)
+    w2 = tf.get_variable(name="d_w2", shape=[h3_size, h2_size], initializer=tf.contrib.layers.xavier_initializer(),
+                         dtype=tf.float32)
+    b2 = tf.get_variable(name="d_b2", shape=[h2_size], initializer=tf.contrib.layers.xavier_initializer(),
+                         dtype=tf.float32)
     h2 = tf.nn.dropout(tf.nn.relu(tf.matmul(h1, w2) + b2), keep_prob)
 
-    w3 = tf.Variable(tf.truncated_normal([h2_size, h1_size], stddev=0.1), name="d_w3", dtype=tf.float32)
-    b3 = tf.Variable(tf.zeros([h1_size]), name="d_b3", dtype=tf.float32)
+    w3 = tf.get_variable(name="d_w3", shape=[h2_size, h1_size], initializer=tf.contrib.layers.xavier_initializer(),
+                         dtype=tf.float32)
+    b3 = tf.get_variable(name="d_b3", shape=[h1_size], initializer=tf.contrib.layers.xavier_initializer(),
+                         dtype=tf.float32)
     h3 = tf.nn.dropout(tf.nn.relu(tf.matmul(h2, w3) + b3), keep_prob)
 
-    w4 = tf.Variable(tf.truncated_normal([h1_size, 1], stddev=0.1), name="d_w4", dtype=tf.float32)
-    b4 = tf.Variable(tf.zeros([1]), name="d_b4", dtype=tf.float32)
+    w4 = tf.get_variable(name="d_w4", shape=[h1_size, 1], initializer=tf.contrib.layers.xavier_initializer(),
+                         dtype=tf.float32)
+    b4 = tf.get_variable(name="d_b4", shape=[1], initializer=tf.contrib.layers.xavier_initializer(), dtype=tf.float32)
     h4 = tf.matmul(h3, w4) + b4
-    y_data =tf.nn.sigmoid(tf.slice(h4,[0,0],[batch_size,-1],name =None))
+    y_data = tf.nn.sigmoid(tf.slice(h4, [0, 0], [batch_size, -1], name=None))
     y_generated = tf.nn.sigmoid(tf.slice(h4, [batch_size, 0], [-1, -1], name=None))
-    d_params = [w1, b1, w2, b2, w3, b3,w4,b4]
+    d_params = [w1, b1, w2, b2, w3, b3, w4, b4]
     return y_data, y_generated, d_params
 
 
@@ -99,7 +116,7 @@ def train():
     d_loss = -tf.reduce_mean(tf.log(y_data) +tf.log(1-y_generated))
     g_loss = -tf.reduce_mean(tf.log(y_generated))
     
-    optimizer=tf.train.AdamOptimizer(0.0001, beta1=0.9, beta2=0.999)
+    optimizer=tf.train.AdamOptimizer(0.00005, beta1=0.9, beta2=0.999)
     d_trainer = optimizer.minimize(d_loss, var_list=d_params)
     g_trainer = optimizer.minimize(g_loss, var_list=g_params)
     #初始化
@@ -125,7 +142,7 @@ def train():
         if not os.path.exists(path):
             os.mkdir(path)
             print("makedir----->{}".format(path))
-        show_result(x_gen_val, "output/epoch{}.jpg".format(epoch))
+        show_result(x_gen_val, "output/10_20_40_60_xavier/epoch{}.jpg".format(epoch))
             
 
 
