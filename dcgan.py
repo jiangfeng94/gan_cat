@@ -23,6 +23,7 @@ def get_img(img_path, crop_h, resize_h):
 	i = int(round((w - crop_w)/2.))
 	cropped_image = scipy.misc.imresize(img[j:j+crop_h, i:i+crop_w],[resize_h, resize_w])
 	return np.array(cropped_image)/255.0
+
 class getdata():
     def __init__(self):
         datapath = '/cats_64x64'
@@ -153,10 +154,8 @@ class DCGAN():
         self.sess.run(tf.global_variables_initializer())
         for epoch in range (training_epoches):
             X_b =self.data(batch_size)
-            self.sess.run(
-                self.D_solver,
-                feed_dict={self.X: X_b, self.z: sample_z(batch_size, self.z_dim)}
-            )
+            self.sess.run(self.D_solver,
+                          feed_dict={self.X: X_b, self.z: sample_z(batch_size, self.z_dim)})
             k = 1
             for _ in range(k):
                 self.sess.run(
