@@ -9,5 +9,5 @@ epoch =100
 batch_size =16
 img_size =64 * 64*3
 z_size = 100
-
-
+c_dim =3
+image_size =64

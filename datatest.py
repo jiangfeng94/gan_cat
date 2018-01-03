@@ -22,4 +22,4 @@ print(b.shape)
 
 z_ =tf.matmul(a,b)+c
 print(z_.shape)
-
+print(4)
